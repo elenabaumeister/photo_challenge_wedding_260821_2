@@ -1,0 +1,91 @@
+"use client";
+
+import { useState } from "react";
+import { supabase } from "../../../lib/supabase";
+
+export default function UploadForm({ challenge }: { challenge: { id: string; task: string } }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!file) return setError("Please choose or take a photo.");
+    if (!file.type.startsWith("image/")) return setError("Please upload an image.");
+    if (file.size > 12 * 1024 * 1024) return setError("Please use an image smaller than 12 MB.");
+
+    setBusy(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `photos/${challenge.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("wedding-photos").upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("wedding-photos").getPublicUrl(path);
+      const { error: dbError } = await supabase.from("photos").insert({
+        challenge_id: challenge.id,
+        image_url: data.publicUrl,
+        guest_name: name.trim() || null,
+      });
+      if (dbError) throw dbError;
+
+      setDone(true);
+    } catch (err: any) {
+      setError(err?.message || "Upload failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <main className="center-page">
+        <div className="card hero success">
+          <div className="big-emoji">🎉</div>
+          <div className="eyebrow">PHOTO SUBMITTED</div>
+          <h1>Challenge complete!</h1>
+          <p>Your photo is now part of the wedding slideshow.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="challenge-page">
+      <section className="challenge-card">
+        <div className="eyebrow">YOUR PHOTO CHALLENGE</div>
+        <h1>{challenge.task}</h1>
+        <p className="muted">Take a photo that completes the task, then send it to the couple.</p>
+        <form onSubmit={submit}>
+          <label className="file-button">
+            📸 {file ? "Change photo" : "Take / choose photo"}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          {file && <div className="file-name">{file.name}</div>}
+          <input
+            className="text-input"
+            placeholder="Your name (optional)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+          />
+          {error && <div className="error">{error}</div>}
+          <button className="button primary full" disabled={busy}>
+            {busy ? "Uploading…" : "Submit photo"}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
