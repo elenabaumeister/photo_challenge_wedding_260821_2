@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
+function createFileId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export default function UploadForm({ challenge }: { challenge: { id: string; task: string } }) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -20,7 +28,7 @@ export default function UploadForm({ challenge }: { challenge: { id: string; tas
     setBusy(true);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `photos/${challenge.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `photos/${challenge.id}/${createFileId()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("wedding-photos").upload(path, file, {
         contentType: file.type,
         upsert: false,

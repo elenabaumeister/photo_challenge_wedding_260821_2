@@ -13,8 +13,9 @@ export default function Admin() {
 
   async function load() {
     const r = await fetch("/api/challenges", { headers: { "x-admin-password": password } });
-    if (!r.ok) return setError("Wrong admin password.");
-    setChallenges(await r.json());
+    const data = await r.json();
+    if (!r.ok) return setError(data.error || "Could not load challenges.");
+    setChallenges(data);
     setUnlocked(true);
     setError("");
   }
