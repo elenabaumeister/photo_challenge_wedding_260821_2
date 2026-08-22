@@ -79,6 +79,7 @@ export default function Slideshow() {
     <main ref={slideshowRef} className="slideshow" onMouseMove={showControls} onTouchStart={showControls}>
       {slide ? (
         <>
+          <div className="slide-backdrop" style={{ backgroundImage: `url(${slide.image_url})` }} />
           <img src={slide.image_url} className="slide-image" alt={slide.challenge.task} />
           <div className="slide-caption">
             <div className="eyebrow">PHOTO CHALLENGE</div>
