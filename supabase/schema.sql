@@ -16,6 +16,14 @@ create table if not exists public.photos (
   created_at timestamptz not null default now()
 );
 
+do $$
+begin
+  alter table public.photos
+  add constraint photos_challenge_id_key unique (challenge_id);
+exception
+  when duplicate_object then null;
+end $$;
+
 alter table public.challenges enable row level security;
 alter table public.photos enable row level security;
 

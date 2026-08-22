@@ -41,6 +41,9 @@ p { font-size: 18px; line-height: 1.5; }
 .slide-caption h1 { font-size: clamp(28px, 4vw, 64px); max-width: 1000px; margin-bottom: 8px; }
 .slide-caption p { margin: 0; opacity: .8; }
 .slide-count { position: absolute; right: 24px; top: 20px; font: 12px Arial, sans-serif; opacity: .65; }
+.slideshow-controls { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; }
+.slideshow-control { border: 1px solid rgba(255,255,255,.5); border-radius: 6px; background: rgba(0,0,0,.5); color: white; padding: 8px 12px; cursor: pointer; font: 700 12px Arial, sans-serif; }
+.slideshow-control:disabled { cursor: not-allowed; opacity: .45; }
 .empty-slideshow { text-align: center; padding: 30px; }
 .empty-slideshow h1 { font-size: 48px; }
 .empty-slideshow p { opacity: .7; }

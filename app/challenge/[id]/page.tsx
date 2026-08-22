@@ -22,5 +22,11 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
     );
   }
 
-  return <UploadForm challenge={challenge} />;
+  const { data: submittedPhoto } = await supabase
+    .from("photos")
+    .select("id")
+    .eq("challenge_id", id)
+    .maybeSingle();
+
+  return <UploadForm challenge={challenge} alreadySubmitted={Boolean(submittedPhoto)} />;
 }

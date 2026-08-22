@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
 function createFileId() {
@@ -11,12 +11,26 @@ function createFileId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export default function UploadForm({ challenge }: { challenge: { id: string; task: string } }) {
+export default function UploadForm({
+  challenge,
+  alreadySubmitted,
+}: {
+  challenge: { id: string; task: string };
+  alreadySubmitted: boolean;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(alreadySubmitted);
+  const [wasAlreadySubmitted, setWasAlreadySubmitted] = useState(alreadySubmitted);
   const [error, setError] = useState("");
+  const submissionKey = `photo-challenge-submitted-${challenge.id}`;
+
+  useEffect(() => {
+    if (localStorage.getItem(submissionKey) === "true") {
+      setDone(true);
+    }
+  }, [submissionKey]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,8 +55,16 @@ export default function UploadForm({ challenge }: { challenge: { id: string; tas
         image_url: data.publicUrl,
         guest_name: name.trim() || null,
       });
-      if (dbError) throw dbError;
+      if (dbError) {
+        if (dbError.code === "23505") {
+          setWasAlreadySubmitted(true);
+          setDone(true);
+          return;
+        }
+        throw dbError;
+      }
 
+      localStorage.setItem(submissionKey, "true");
       setDone(true);
     } catch (err: any) {
       setError(err?.message || "Upload failed. Please try again.");
@@ -56,9 +78,9 @@ export default function UploadForm({ challenge }: { challenge: { id: string; tas
       <main className="center-page">
         <div className="card hero success">
           <div className="big-emoji">🎉</div>
-          <div className="eyebrow">PHOTO SUBMITTED</div>
-          <h1>Challenge complete!</h1>
-          <p>Your photo is now part of the wedding slideshow.</p>
+          <div className="eyebrow">CHALLENGE COMPLETE</div>
+          <h1>{wasAlreadySubmitted ? "A photo has already been submitted." : "Challenge complete!"}</h1>
+          <p>{wasAlreadySubmitted ? "This challenge can only be completed once." : "Your photo is now part of the wedding slideshow."}</p>
         </div>
       </main>
     );
